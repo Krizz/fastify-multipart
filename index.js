@@ -162,15 +162,17 @@ function fastifyMultipart (fastify, options, done) {
         req.emit('error', error)
       })
 
-    function wrap (field, file, filename, encoding, mimetype) {
+    async function wrap (field, file, filename, encoding, mimetype) {
       log.debug({ field, filename, encoding, mimetype }, 'parsing part')
       files++
-      eos(file, waitForFiles)
+
       if (field === '__proto__') {
         file.destroy(new Error('__proto__ is not allowed as field name'))
         return
       }
-      handler(field, file, filename, encoding, mimetype)
+      
+      await handler(field, file, filename, encoding, mimetype)
+      eos(file, waitForFiles)
     }
 
     function waitForFiles (err) {
