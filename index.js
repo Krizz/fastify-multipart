@@ -170,9 +170,9 @@ function fastifyMultipart (fastify, options, done) {
         file.destroy(new Error('__proto__ is not allowed as field name'))
         return
       }
-      
-      await handler(field, file, filename, encoding, mimetype)
-      eos(file, waitForFiles)
+
+      const error = await handler(field, file, filename, encoding, mimetype)
+      waitForFiles(error);
     }
 
     function waitForFiles (err) {
