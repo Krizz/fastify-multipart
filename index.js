@@ -189,7 +189,7 @@ function fastifyMultipart (fastify, options, done) {
       ++count
       if (callDoneOnNextEos && count === files) {
         completed = true
-        done()
+        setImmediate(done)
       }
     }
 
