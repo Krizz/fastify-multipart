@@ -172,7 +172,7 @@ function fastifyMultipart (fastify, options, done) {
       }
 
       const error = await handler(field, file, filename, encoding, mimetype)
-      waitForFiles(error);
+      eos(file, waitForFiles)
     }
 
     function waitForFiles (err) {
