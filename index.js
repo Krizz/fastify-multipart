@@ -3,9 +3,12 @@
 const fp = require('fastify-plugin')
 const Busboy = require('busboy')
 const kMultipart = Symbol('multipart')
-const eos = require('end-of-stream')
+//const eos = require('end-of-stream')
 const deepmerge = require('deepmerge')
 const { PassThrough } = require('stream')
+const stream = require('stream');
+const util = require('util');
+const pipeline = util.promisify(stream.pipeline);
 
 function setMultipart (req, done) {
   // nothing to do, it will be done by the Request.multipart object
@@ -132,10 +135,10 @@ function fastifyMultipart (fastify, options, done) {
 
     const busboyOptions = deepmerge.all([{ headers: req.headers }, options || {}, opts || {}])
     const stream = busboy(busboyOptions)
-    var completed = false
-    var files = 0
-    var count = 0
-    var callDoneOnNextEos = false
+    let completed = false
+    let files = 0
+    let count = 0
+    let callDoneOnNextEos = false
 
     req.on('error', function (err) {
       stream.destroy()
@@ -165,14 +168,14 @@ function fastifyMultipart (fastify, options, done) {
     async function wrap (field, file, filename, encoding, mimetype) {
       log.debug({ field, filename, encoding, mimetype }, 'parsing part')
       files++
-      eos(file, waitForFiles)
+
       if (field === '__proto__') {
         file.destroy(new Error('__proto__ is not allowed as field name'))
         return
       }
 
       const error = await handler(field, file, filename, encoding, mimetype)
-
+      waitForFiles(error);
     }
 
     function waitForFiles (err) {
@@ -183,13 +186,15 @@ function fastifyMultipart (fastify, options, done) {
       }
 
       if (completed) {
+        console.log('completed')
         return
       }
 
       ++count
       if (callDoneOnNextEos && count === files) {
+        console.log('DONE')
         completed = true
-        setImmediate(done)
+        done()
       }
     }
 
